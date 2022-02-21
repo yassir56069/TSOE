@@ -301,11 +301,10 @@ class currency(commands.Cog):
     @commands.command(name="week", aliases=['wk'])
     @ commands.has_role(678547289824034846)
     async def weekr435_test(self, ctx):
-        if date.today().weekday() == 6:
-            db = pgdb.retrieve_db()
-            db_bals = await db.fetch('SELECT userid , balance FROM users')
-            for userid, balance in dict(db_bals).items():
-                await db.execute(f'UPDATE users SET weekly_bal = {balance} WHERE userid = {userid}    ')
+        db = pgdb.retrieve_db()
+        db_bals = await db.fetch('SELECT userid , balance FROM users')
+        for userid, balance in dict(db_bals).items():
+            await db.execute(f'UPDATE users SET weekly_bal = {balance} WHERE userid = {userid}    ')
 
     @ commands.cooldown(1, 30, commands.BucketType.guild)
     @commands.command(name="alltimelb", aliases=['atlb', 'atleaderboard', 'alltimeleaderboard'])
@@ -323,12 +322,10 @@ class currency(commands.Cog):
     @commands.command(name="weeklylb", aliases=['wlb', 'wleaderboard', 'weeklyleaderboard', 'lb', 'leaderboard'])
     async def weekly_leaderboard(self, ctx):
         db = pgdb.retrieve_db()
-        print('test')
         db_bals = await db.fetch('''SELECT userid , balance - weekly_bal AS weekly_lb FROM users
                                     ORDER BY weekly_lb DESC
                                     FETCH FIRST 10 ROWS ONLY;
                                     ''')
-        print('another test')
         lb_embed = await create_wlb_embed(self, db_bals)
         print('another test 2')
         await ctx.send(embed=lb_embed)
