@@ -8,7 +8,7 @@ import asyncpg
 class db():
     def __init__(self):
         '''Postgres Database Object'''
-        self.credentials = {"user": "tsoe_admin", "password": '123getcool', "database": "tsoedb", "host": "127.0.0.1"}
+        self.credentials = {"user": "tsoe_admin", "password": '123getcool', "database": "tsoedb", "host": "52.15.88.11"}
 
     async def run_db(self):
         self.pool = await asyncpg.create_pool(**self.credentials)
