@@ -163,33 +163,34 @@ class currency(commands.Cog):
     # handles all chat filtering and moderation
     @commands.Cog.listener("on_message")
     async def chat_filter(self, message):
+        guild = self.bot.get_guild(int(self.roles['SERVERID'][0]))
+        role = guild.get_role(678547289824034846) #owner
+        if not role in message.author.roles: #if user isn't owner
+            # URL detection
+            URL_REG = re.compile(r'https?://(?:www\.)?.+')
+            if message.author.id != self.bot.user.id:
+                if re.search( URL_REG , str(message.content)) != None:
+                    await message.delete()
+                    if message.channel.id != (944572217000341584): #if not terminal channel
+                        await link_punish(self , message)
 
-        # URL detection
-        URL_REG = re.compile(r'https?://(?:www\.)?.+')
-        if message.author.id != self.bot.user.id:
-            if re.search( URL_REG , str(message.content)) != None:
-                await message.delete()
-                if message.channel.id != (944572217000341584): #if not terminal channel
-                    await link_punish(self , message)
+            # flood detection
+            if message.author.id != self.bot.user.id:
+                if len(message.content.split("\n")) >= self.flood_rate:
+                    user = guild.get_member(int(message.author.id))
+                    mute_role = guild.get_role(int(726446379823530015))
+                    await user.add_roles(mute_role)
+                    await message.delete()
+                    await filtered_msg_handling(self, "flooding", message.author.id)
 
-        # flood detection
-        if message.author.id != self.bot.user.id:
-            if len(message.content.split("\n")) >= self.flood_rate:
-                guild = self.bot.get_guild(int(self.roles['SERVERID'][0]))
-                user = guild.get_member(int(message.author.id))
-                role = guild.get_role(int(726446379823530015))
-                await user.add_roles(role)
-                await message.delete()
-                await filtered_msg_handling(self, "flooding", message.author.id)
-
-        # spam detection
-        if message.author.id != self.bot.user.id:
-            try:
-                self.msg_counts[str(message.author.id)]['rate'] = self.msg_counts[str(
-                    message.author.id)]['rate']+1
-            except:
-                self.msg_counts[str(message.author.id)] = {}
-                self.msg_counts[str(message.author.id)]['rate'] = 0
+            # spam detection
+            if message.author.id != self.bot.user.id:
+                try:
+                    self.msg_counts[str(message.author.id)]['rate'] = self.msg_counts[str(
+                        message.author.id)]['rate']+1
+                except:
+                    self.msg_counts[str(message.author.id)] = {}
+                    self.msg_counts[str(message.author.id)]['rate'] = 0
 
     @commands.Cog.listener()
     @commands.cooldown(1, 3, BucketType.guild)
