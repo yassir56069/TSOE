@@ -323,12 +323,14 @@ class currency(commands.Cog):
     @commands.command(name="weeklylb", aliases=['wlb', 'wleaderboard', 'weeklyleaderboard', 'lb', 'leaderboard'])
     async def weekly_leaderboard(self, ctx):
         db = pgdb.retrieve_db()
-        db_bals = await db.fetch('''SELECT userid ,balance - weekly_bal AS weekly_lb FROM users
+        print('test')
+        db_bals = await db.fetch('''SELECT userid , balance - weekly_bal AS weekly_lb FROM users
                                     ORDER BY weekly_lb DESC
                                     FETCH FIRST 10 ROWS ONLY;
                                     ''')
+        print('another test')
         lb_embed = await create_wlb_embed(self, db_bals)
-        print(lb_embed)
+        print('another test 2')
         await ctx.send(embed=lb_embed)
 
     @ commands.cooldown(1, 30, commands.BucketType.guild)
@@ -1072,7 +1074,10 @@ async def create_atlb_embed(self, db_bals):
     for userid, balance in dict(db_bals).items():
         ind = {k: i for i, k in enumerate(dict(db_bals).keys())}
         user = guild.get_member(userid)
-        msg_string = msg_string + (f'`{int(ind[userid]) + 1}▐ `{user.mention}`- 𝕭𝔞𝔩𝔞𝔫𝔠𝔢: {balance}`\n')
+        try:
+            msg_string = msg_string + (f'`{int(ind[userid]) + 1}▐ `{user.mention}`- 𝕭𝔞𝔩𝔞𝔫𝔠𝔢: {balance}`\n')
+        except:
+            msg_string = msg_string + (f'`{int(ind[userid]) + 1}▐ {userid}- 𝕭𝔞𝔩𝔞𝔫𝔠𝔢: {balance}`\n')
         msg_string = msg_string + '\n'
 
     lb_embed.add_field(name=chr(173), value=msg_string)
@@ -1081,21 +1086,26 @@ async def create_atlb_embed(self, db_bals):
 async def create_wlb_embed(self, db_bals):
     msg_string = f'{chr(173)}'
     guild = self.bot.get_guild(int(self.roles['SERVERID'][0]))
+    print('another test 3')
     lb_embed = discord.Embed(title="𝖂𝔢𝔢𝔨𝔩𝔶 𝕷𝔢𝔞𝔡𝔢𝔯𝔟𝔬𝔞𝔯𝔡",
                              description="*The Ten Highest Earners This Week*", colour=discord.Colour.gold())
     lb_embed.set_footer(text='𝕿𝔥𝔢 𝕾𝔞𝔫𝔱𝔲𝔞𝔯𝔶 𝕺𝔣 𝕰𝔱𝔢𝔯𝔫𝔞𝔩𝔰',
                         icon_url='https://i.imgur.com/3zNEuX4.png')
 
+    print('another test 4')
     for userid, balance in dict(db_bals).items():
         ind = {k: i for i, k in enumerate(dict(db_bals).keys())}
         user = guild.get_member(userid)
-        msg_string = msg_string + (f'`{int(ind[userid]) + 1}▐ `{user.mention}`- 𝕭𝔞𝔩𝔞𝔫𝔠𝔢: {balance}`\n')
+        try:
+            msg_string = msg_string + (f'`{int(ind[userid]) + 1}▐ `{user.mention}`- 𝕭𝔞𝔩𝔞𝔫𝔠𝔢: {balance}`\n')
+        except:
+            msg_string = msg_string + (f'`{int(ind[userid]) + 1}▐ {userid}- 𝕭𝔞𝔩𝔞𝔫𝔠𝔢: {balance}`\n')
+
         msg_string = msg_string + '\n'
-
-        #lb_embed.add_field(name=chr(173), value=chr(173))
-        #lb_embed.add_field(name=chr(173), value=chr(173))
-
+        print('another test 5')
+    print('another test 6')
     lb_embed.add_field(name=chr(173), value=msg_string)
+    print('another test 7')
     return lb_embed
 
 
