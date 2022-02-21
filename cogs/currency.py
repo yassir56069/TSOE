@@ -131,34 +131,39 @@ class currency(commands.Cog):
     # handles message costs and payouts 
     @commands.Cog.listener("on_message")
     async def currency_manipulation(self, message):
-        if not message.author.id == self.bot.user.id:  # EP CALC PER MESSAGE
-            #reveal_cache(self)
-            self.msg_count = self.msg_count+1
-            userid = str(message.author.id)
-            await fast_retrieve(self, userid)
-            #fetch_from_json(self, userid)
-            users = retrieve_cache(self)
-            guild = self.bot.get_guild(int(self.roles['SERVERID'][0]))
-            user = guild.get_member(int(userid))
-            val = users[str(message.author.id)]['amount']
-            if val == 0:
-                role = guild.get_role(int(self.roles['Ban'][0]))
-                await message.author.add_roles(role)
+        try:
+            if not message.author.id == self.bot.user.id:  # EP CALC PER MESSAGE
+                #reveal_cache(self)
+                self.msg_count = self.msg_count+1
+                userid = str(message.author.id)
+                await fast_retrieve(self, userid)
+                #fetch_from_json(self, userid)
+                users = retrieve_cache(self)
+                guild = self.bot.get_guild(int(self.roles['SERVERID'][0]))
+                user = guild.get_member(int(userid))
+                val = users[str(message.author.id)]['amount']
+                if val == 0:
+                    role = guild.get_role(int(self.roles['Ban'][0]))
+                    await message.author.add_roles(role)
 
-            try:
-                if int(users[str(userid)]['msg_payout']) < self.peak_pay and self.Peakrun == True:
-                    users[str(userid)]['msg_payout'] = self.peak_pay
+                try:
+                    if int(users[str(userid)]['msg_payout']) < self.peak_pay and self.Peakrun == True:
+                        users[str(userid)]['msg_payout'] = self.peak_pay
+                        amount = int(users[str(userid)]['msg_payout'])
+                    else:
+                        amount = int(users[str(userid)]['msg_payout'])
+                except:
+                    users[str(userid)]['msg_decay'] = 'None'
+                    users[str(userid)]['msg_payout'] = self.no_boost
                     amount = int(users[str(userid)]['msg_payout'])
-                else:
-                    amount = int(users[str(userid)]['msg_payout'])
-            except:
-                users[str(userid)]['msg_decay'] = 'None'
-                users[str(userid)]['msg_payout'] = self.no_boost
-                amount = int(users[str(userid)]['msg_payout'])
 
-            await create_user(self, users, message.author)
-            await update_json(self, users, message.author, amount, message)
-            self.text_chnl = message.channel
+                await create_user(self, users, message.author)
+                await update_json(self, users, message.author, amount, message)
+                self.text_chnl = message.channel
+
+        except AttributeError as e:
+            print(e)
+            pass
 
     # handles all chat filtering and moderation
     @commands.Cog.listener("on_message")
@@ -205,22 +210,26 @@ class currency(commands.Cog):
         userid = str(user.id)
         await fast_retrieve(self, userid)
         #fetch_from_json(self, userid)
-        users = retrieve_cache(self)
-        rolecheck = guild.get_role(int(self.roles['Bots'][0]))
-        if userid in users:
-            val = users[str(user.id)]['amount']
-            rnd_val = (int(val)) / 1000
-            rnd_val = round(rnd_val) * 1000
+        try: 
+            users = retrieve_cache(self)
+            rolecheck = guild.get_role(int(self.roles['Bots'][0]))
+            if userid in users:
+                val = users[str(user.id)]['amount']
+                rnd_val = (int(val)) / 1000
+                rnd_val = round(rnd_val) * 1000
 
-            if user != self.bot.user.id:
-                if rolecheck not in user.roles:
-                    for i in self.rolevals.keys():
-                        if rnd_val >= i:
-                            role = guild.get_role(self.rolevals[i])
-                            await user.add_roles(role)
-                        if rnd_val < i:
-                            role = guild.get_role(self.rolevals[i])
-                            await user.remove_roles(role)
+                if user != self.bot.user.id:
+                    if rolecheck not in user.roles:
+                        for i in self.rolevals.keys():
+                            if rnd_val >= i:
+                                role = guild.get_role(self.rolevals[i])
+                                await user.add_roles(role)
+                            if rnd_val < i:
+                                role = guild.get_role(self.rolevals[i])
+                                await user.remove_roles(role)
+        except AttributeError as e:
+            print(e)
+            pass
 
     # On Join add user to users.json
     @commands.Cog.listener()
