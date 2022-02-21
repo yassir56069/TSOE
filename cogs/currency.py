@@ -178,14 +178,14 @@ class currency(commands.Cog):
                         if message.channel.id != (944572217000341584): #if not terminal channel
                             await link_punish(self , message)
 
-            # flood detection
-            if message.author.id != self.bot.user.id:
-                if len(message.content.split("\n")) >= self.flood_rate:
-                    user = guild.get_member(int(message.author.id))
-                    mute_role = guild.get_role(int(726446379823530015))
-                    await user.add_roles(mute_role)
-                    await message.delete()
-                    await filtered_msg_handling(self, "flooding", message.author.id)
+                # flood detection
+                if message.author.id != self.bot.user.id:
+                    if len(message.content.split("\n")) >= self.flood_rate:
+                        user = guild.get_member(int(message.author.id))
+                        mute_role = guild.get_role(int(726446379823530015))
+                        await user.add_roles(mute_role)
+                        await message.delete()
+                        await filtered_msg_handling(self, "flooding", message.author.id)
 
             # spam detection
             if message.author.id != self.bot.user.id:
