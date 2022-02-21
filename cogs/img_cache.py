@@ -8,7 +8,8 @@ whitelist = [
     'https://64.media.tumblr.com',
     'https://preview.redd.it',
     'https://pbs.twimg.com/media/',
-    'https://gfycat.com/'
+    'https://gfycat.com/',
+    'https://tenor.com/view/'
 ]
 
 
