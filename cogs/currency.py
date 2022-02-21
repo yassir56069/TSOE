@@ -164,15 +164,19 @@ class currency(commands.Cog):
     @commands.Cog.listener("on_message")
     async def chat_filter(self, message):
         guild = self.bot.get_guild(int(self.roles['SERVERID'][0]))
-        role = guild.get_role(678547289824034846) #owner
-        if not role in message.author.roles: #if user isn't owner
-            # URL detection
-            URL_REG = re.compile(r'https?://(?:www\.)?.+')
-            if message.author.id != self.bot.user.id:
-                if re.search( URL_REG , str(message.content)) != None:
-                    await message.delete()
-                    if message.channel.id != (944572217000341584): #if not terminal channel
-                        await link_punish(self , message)
+        owner_role = guild.get_role(678547289824034846) #owner
+        partner_role = guild.get_role(726501556324663437) #partner
+
+
+        if not owner_role in message.author.roles: #if user isn't owner
+            if not partner_role in message.author.roles and message.channel.id != 726441555660898354:
+                # URL detection
+                URL_REG = re.compile(r'https?://(?:www\.)?.+')
+                if message.author.id != self.bot.user.id:
+                    if re.search( URL_REG , str(message.content)) != None:
+                        await message.delete()
+                        if message.channel.id != (944572217000341584): #if not terminal channel
+                            await link_punish(self , message)
 
             # flood detection
             if message.author.id != self.bot.user.id:
