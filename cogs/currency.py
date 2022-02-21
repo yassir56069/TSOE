@@ -316,6 +316,7 @@ class currency(commands.Cog):
                                     FETCH FIRST 10 ROWS ONLY
                                     ''')
         lb_embed = await create_atlb_embed(self, db_bals)
+        print(lb_embed)
         await ctx.send(embed=lb_embed)
 
     @ commands.cooldown(1, 30, commands.BucketType.guild)
@@ -327,6 +328,7 @@ class currency(commands.Cog):
                                     FETCH FIRST 10 ROWS ONLY;
                                     ''')
         lb_embed = await create_wlb_embed(self, db_bals)
+        print(lb_embed)
         await ctx.send(embed=lb_embed)
 
     @ commands.cooldown(1, 30, commands.BucketType.guild)
