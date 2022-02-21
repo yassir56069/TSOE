@@ -169,8 +169,7 @@ class currency(commands.Cog):
         if message.author.id != self.bot.user.id:
             if re.search( URL_REG , str(message.content)) != None:
                 await message.delete()
-                if message.channel.id == (678538311098433548):
-  
+                if message.channel.id != (944572217000341584): #if not terminal channel
                     await link_punish(self , message)
 
         # flood detection
