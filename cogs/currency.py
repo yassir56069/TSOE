@@ -59,7 +59,7 @@ class currency(commands.Cog):
         # Timing Stuff
         # Default is 60 (turn time into minutes instead of seconds)
         self.peak_time = 60
-        self.peak_rnd = [1, 2]
+        self.peak_rnd = [1, 12]
 
         # memory usage, LRUs act as cache
         self.bal = LRU(30)
@@ -132,7 +132,7 @@ class currency(commands.Cog):
     @commands.Cog.listener("on_message")
     async def currency_manipulation(self, message):
         if not message.author.id == self.bot.user.id:  # EP CALC PER MESSAGE
-            reveal_cache(self)
+            #reveal_cache(self)
             self.msg_count = self.msg_count+1
             userid = str(message.author.id)
             await fast_retrieve(self, userid)
@@ -163,7 +163,6 @@ class currency(commands.Cog):
     # handles all chat filtering and moderation
     @commands.Cog.listener("on_message")
     async def chat_filter(self, message):
-
 
         # URL detection
         URL_REG = re.compile(r'https?://(?:www\.)?.+')
@@ -249,7 +248,7 @@ class currency(commands.Cog):
                 await asyncio.sleep(5)
                 await ft_msg.delete()
             elif cmds[3] in msg[:5]:
-                print('yes')
+                #print('yes')
                 del_msg = await user.send("> `del` **@User : __delete user's latest messages,costs a % of user's current EP,does not work on newpog users__**")
                 await asyncio.sleep(5)
                 await del_msg.delete()
@@ -347,8 +346,8 @@ class currency(commands.Cog):
                                 VALUES('{userid}','{int(users[str(userid)]['amount'])}','{int(users[str(userid)]['amount'])}');
                                 """)
 
-                print(
-                    f"{'_'*50} \nDATABASE ENTRY ADDED \nTIME: {datetime.now()} \n {'_'*50}")
+                #print(
+                #    f"{'_'*50} \nDATABASE ENTRY ADDED \nTIME: {datetime.now()} \n {'_'*50}")
 
             except asyncpg.UniqueViolationError or asyncpg.PostgresSyntaxError:
                 pass
@@ -402,9 +401,9 @@ class currency(commands.Cog):
         # Cooldown time before next peaktime
         if int(self.peak['cooldown'][0]) == 0:
             self.peak['duration'][0] = 0
-            self.peak_cooldown = random.randint(1,2)  # randomise cooldown duration
+            self.peak_cooldown = random.randint(1,30)  # randomise cooldown duration
             tz_local = datetime.now().astimezone().tzinfo  # local timezone
-            print('Next Peak In: ' + str(self.peak_cooldown) + " Minutes")
+            #print('Next Peak In: ' + str(self.peak_cooldown) + " Minutes")
             self.peak['cooldown'][0] = time.time(
             ) + self.peak_cooldown 
 
@@ -414,7 +413,7 @@ class currency(commands.Cog):
         if self.peak['duration'][0] == 0:  # start peak
             if datetime.now() < self.peak_cooldown:
                 # sleep until peaktime
-                print('peaktime sleep..')
+                #print('peaktime sleep..')
                 pass
             else:
                 # Peaktime run
@@ -433,7 +432,7 @@ class currency(commands.Cog):
 
         if self.peak['duration'][0] != 0:  # end peak
             if datetime.now() < self.peak_duration:
-                print('peaktime sleep..(DURATION)')
+                #print('peaktime sleep..(DURATION)')
                 pass
             else:
                 self.peak['duration'][0] = 0
@@ -499,7 +498,7 @@ class currency(commands.Cog):
             if users[str(userid)]['msg_decay'] == 'decayed':
                 for i in range(1, 4):
                     await role_rmv(self, int(self.roles['SERVERID'][0]), int(self.roles['boost'+str(i)][0]), userid)
-                    print("BOOST " + str(i) + " REMOVED")
+                    #print("BOOST " + str(i) + " REMOVED")
                 users[str(userid )]['msg_decay'] = 'None'
                 await db_dump_decay(self,userid)
 
@@ -601,6 +600,12 @@ class currency(commands.Cog):
     @ commands.has_role('Owner')
     async def radd(self, ctx, rolename, roleid):
         await assn_role(rolename, roleid)
+
+    @ commands.command(name="quit_bot", aliases=['q'])
+    @ commands.has_role(678547289824034846)
+    async def quit_bot(self, ctx):
+        print("Logging out..")
+        await self.bot.logout()
 
     @ commands.command(name="ADDUSER", aliases=['uadd'])
     @ commands.has_role(678547289824034846)
@@ -934,7 +939,7 @@ async def filtered_msg_handling(self, reason, msg_author):
     role = guild.get_role(int(726446379823530015))
     users = retrieve_cache(self)
 
-    print("ADDED ROLE")
+    #print("ADDED ROLE")
 
     user_bal = users[str(msg_author)]['amount']
     cost = round(self.filter_tax*user_bal, 2)
@@ -942,7 +947,7 @@ async def filtered_msg_handling(self, reason, msg_author):
     users[str(msg_author)]['amount'] = user_bal
     duration = 30
 
-    print("CALCULATIONS DONE, ABOUT TO SEND EMBED")
+    #print("CALCULATIONS DONE, ABOUT TO SEND EMBED")
     warn_msg = await self.text_chnl.send(f'``` {user} has been charged {cost} EP and muted for {reason}: {duration} seconds.```')
 
     await asyncio.sleep(duration)  # MUTE DURATION
@@ -1123,7 +1128,6 @@ async def transaction_embed(self, ctx, rcv, guildid, title, costmsg):
         return user == ctx.author and str(reaction.emoji) == '✔'
 
     reactor = ctx.author.id
-    print(ctx.author.id)
     user = ctx.author
     trn_embed = await ctx.send(embed=Warn_embed, delete_after=5)
     await addreactionss(trn_embed)
@@ -1262,8 +1266,6 @@ else:
 
 
 async def add_up_streaks(self, userid, rcvid):
-    print(f'DICT: {str(self.dwn_streaks.keys())}')
-    print(f'RCVID: {str(rcvid)}')
     try:
         mult = str(self.up_streaks[str(rcvid)]['Current Streak:'])
     except:
@@ -1272,11 +1274,9 @@ async def add_up_streaks(self, userid, rcvid):
     # setup streaks for user
     if int(mult) < 4:
         if str(rcvid) not in self.up_streaks.keys():
-            print("NOT FOUND")
             self.up_streaks[str(rcvid)] = {}
             self.up_streaks[str(rcvid)]['Current Streak:'] = 1
         else:
-            print("FOUND")
             mult = int(mult) + 1
             self.up_streaks[str(rcvid)]['Current Streak:'] = mult
     else:
@@ -1287,8 +1287,6 @@ async def add_up_streaks(self, userid, rcvid):
 
 
 async def add_dn_streaks(self, userid, rcvid):
-    print(f'DICT: {str(self.dwn_streaks.keys())}')
-    print(f'RCVID: {str(rcvid)}')
     try:
         mult = str(self.dwn_streaks[str(rcvid)]['Current Streak:'])
     except:
@@ -1297,11 +1295,9 @@ async def add_dn_streaks(self, userid, rcvid):
     # setup streaks for user
     if int(mult) < 4:
         if str(rcvid) not in self.dwn_streaks.keys():
-            print("NOT FOUND")
             self.dwn_streaks[str(rcvid)] = {}
             self.dwn_streaks[str(rcvid)]['Current Streak:'] = 1
         else:
-            print("FOUND")
             mult = int(mult) + 1
             self.dwn_streaks[str(rcvid)]['Current Streak:'] = mult
     else:
