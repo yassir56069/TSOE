@@ -167,7 +167,7 @@ class currency(commands.Cog):
         owner_role = guild.get_role(678547289824034846) #owner
         partner_role = guild.get_role(726501556324663437) #partner
 
-
+    
         if not owner_role in message.author.roles: #if user isn't owner
             if not partner_role in message.author.roles and message.channel.id != 726441555660898354:
                 # URL detection
