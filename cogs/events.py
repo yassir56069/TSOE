@@ -1,3 +1,4 @@
+from ast import excepthandler
 import os, discord, json,asyncio
 from os import path
 from discord.ext import commands, tasks
@@ -36,6 +37,10 @@ class events(commands.Cog):
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
+        if isinstance(error, AttributeError):
+            print('user not found')
+            pass 
+
         if isinstance(error, commands.CommandOnCooldown):
             test = '```This command is on a cooldown, please try again in {:.2f}s```'.format(error.retry_after)
             cooldwn=await ctx.send(test)

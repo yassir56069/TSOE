@@ -57,11 +57,12 @@ async def fast_retrieve(self, userid):
         users = await db.fetch('SELECT userid, balance FROM users')
         if str(userid) not in dict(users).keys():
             await db_new(userid)
-
         self.bal[str(userid)] = {}
         self.bal[str(userid)]['amount'] = int (await db_fetch_bal(userid))
         self.bal[str(userid)]['msg_decay'] = await db_fetch_decay(userid)
         self.bal[str(userid)]['msg_payout'] = int (await db_fetch_payout(userid))
+        print("fast_retrieve successful completely;;")
+    print("fast_retrieve not necessary;;")
         
 async def db_decay_data(self,userid):
     '''overwrite cache msgs data with database'''

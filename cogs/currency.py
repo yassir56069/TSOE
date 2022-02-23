@@ -651,37 +651,43 @@ class currency(commands.Cog):
     @ commands.command(name='Balance_cmd', aliases=['bal'])
     @ commands.cooldown(10, 60, commands.BucketType.user)
     async def balance(self, ctx):
-        await fast_retrieve(self, ctx.author.id)
-        #fetch_from_json(self, ctx.author.id)
-        users = retrieve_cache(self)
-        proxy_bal_1 = None
-        proxy_bal_2 = None
-        sndid = ctx.author.id
-        sndep = users[str(sndid)]['amount']
-        channel = ctx.channel
-        guild = self.bot.get_guild(int(self.roles['SERVERID'][0]))
-        for user in users.keys():
-            if user != str(ctx.author.id):
-                proxy_bal_user = guild.get_member(int(user))
-                if proxy_bal_1 == None:
-                    proxy_bal_1_user = guild.get_member(int(user))
-                    proxy_bal_1 = round(
-                        users[str(proxy_bal_user.id)]['amount'], 2)
-                else:
-                    if user != str(proxy_bal_1_user.id):
-                        proxy_bal_2_user = guild.get_member(int(user))
-                        proxy_bal_2 = round(
-                            users[str(proxy_bal_user.id)]['amount'], 2)
+        try:
+            await fast_retrieve(self, ctx.author.id)
+            #fetch_from_json(self, ctx.author.id)
+            users = retrieve_cache(self)
+            proxy_bal_1 = None
+            proxy_bal_2 = None
+            sndid = ctx.author.id
+            print(sndid)
+            print(ctx.author.id)
+            sndep = users[str(sndid)]['amount']
+            guild = self.bot.get_guild(int(self.roles['SERVERID'][0]))
+            for user in users.keys():
+                if user != str(ctx.author.id):
+                    proxy_bal_user = guild.get_member(int(user))
+                    if proxy_bal_user != None:
+                        if proxy_bal_1 == None:
+                            proxy_bal_1_user = guild.get_member(int(user))
+                            proxy_bal_1 = round(
+                                users[str(proxy_bal_user.id)]['amount'], 2)
+                        else:
+                            if user != str(proxy_bal_1_user.id):
+                                proxy_bal_2_user = guild.get_member(int(user))
+                                proxy_bal_2 = round(
+                                    users[str(proxy_bal_user.id)]['amount'], 2)
 
-        if proxy_bal_1 == None:
-            await Bal_fnc(self, ctx, sndep)
-            await ctx.message.delete(delay=10)
-        elif proxy_bal_2 == None:
-            await Bal_fnc(self, ctx, sndep, proxy_bal_1=proxy_bal_1, proxy_bal_1_user=proxy_bal_1_user)
-            await ctx.message.delete(delay=12)
-        else:
-            await Bal_fnc(self, ctx, sndep, proxy_bal_1=proxy_bal_1, proxy_bal_1_user=proxy_bal_1_user, proxy_bal_2=proxy_bal_2, proxy_bal_2_user=proxy_bal_2_user)
-            await ctx.message.delete(delay=15)
+            if proxy_bal_1 == None:
+                await Bal_fnc(self, ctx, sndep)
+                await ctx.message.delete(delay=10)
+            elif proxy_bal_2 == None:
+                await Bal_fnc(self, ctx, sndep, proxy_bal_1=proxy_bal_1, proxy_bal_1_user=proxy_bal_1_user)
+                await ctx.message.delete(delay=12)
+            else:
+                await Bal_fnc(self, ctx, sndep, proxy_bal_1=proxy_bal_1, proxy_bal_1_user=proxy_bal_1_user, proxy_bal_2=proxy_bal_2, proxy_bal_2_user=proxy_bal_2_user)
+                await ctx.message.delete(delay=15)
+        except Exception as e:
+            print(f'BALANCE:: {e}')
+            pass
 
     @ commands.command(name='submit_image', aliases=['submit','s'])
     @ commands.cooldown(5, 60, commands.BucketType.guild)
