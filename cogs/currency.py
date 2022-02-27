@@ -139,7 +139,6 @@ class currency(commands.Cog):
         bot_role = guild.get_role(726741576495398933) 
         try:           
             if not (bot_role in message.author.roles or message.channel.id == 726441555660898354):  # EP CALC PER MESSAGE
-                reveal_cache(self)
                 self.msg_count = self.msg_count+1
                 userid = str(message.author.id)
                 await fast_retrieve(self, userid)
@@ -815,7 +814,6 @@ class currency(commands.Cog):
     @ commands.command(name="Downvote_cmd", aliases=['dn', 'downvote'])
     @ commands.cooldown(4, 1, commands.BucketType.guild)
     async def dn(self, ctx, rcv: discord.User):
-        print(self.dwn_streaks)
         await fast_retrieve(self, ctx.author.id)
         await fast_retrieve(self, rcv.id)
 
