@@ -178,7 +178,7 @@ class currency(commands.Cog):
         partner_role = guild.get_role(726501556324663437) #partner
 
         try:
-            if not owner_role in message.author.roles or not partner_role in message.author.roles and message.channel.id != 726441555660898354:
+            if not ( (owner_role in message.author.roles) or (partner_role in message.author.roles and message.channel.id == 726441555660898354) ) :
                 # URL detection
                 URL_REG = re.compile(r'https?://(?:www\.)?.+')
                 if message.author.id != self.bot.user.id:
