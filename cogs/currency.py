@@ -96,7 +96,7 @@ class currency(commands.Cog):
             4: '<:Streak4:881403697635164241>',
         }
         # Message costs
-        self.booster_length = 30
+        self.booster_length = 86400
         self.no_boost = -1
         self.peak_pay = 4
         self.b1_payout = 6
@@ -1056,7 +1056,7 @@ async def booster_create(self, ctx, cost, guildid, roleid, msg_payout, boosterna
             userid = sndid
             users[str(sndid)]['amount'] = sndep
             await role_add(self, guildid, roleid, userid, -1)
-            users[str(sndid)]['msg_decay'] = time.time()+self.booster_length
+            users[str(sndid)]['msg_decay'] = time.time()+ self.booster_length
             users[str(sndid)]['msg_payout'] = msg_payout
             await db_dump_decay(self,userid)
 
