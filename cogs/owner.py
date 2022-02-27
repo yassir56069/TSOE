@@ -1,4 +1,5 @@
 import os, discord, random, asyncio, json, time, platform
+from turtle import down
 from os import path
 from discord.ext import commands, tasks
 from discord.ext.commands import cooldown
@@ -37,11 +38,6 @@ class owner(commands.Cog):
 
         await ctx.send(embed=embed)
 
-    @commands.has_permissions(administrator=True)
-    @commands.command(name="shutdown", aliases=["kill"], description="Turns the bot off")
-    async def poweroff(self, ctx):
-        await ctx.send('Shutting down! :wave:')
-        await ctx.bot.logout()
 
     @commands.has_permissions(administrator=True)
     @commands.command(name="update", aliases=["pull", "gitpull"], description="Update the bot")

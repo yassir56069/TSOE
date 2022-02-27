@@ -37,12 +37,12 @@ else:
 class currency(commands.Cog):
 
     def __init__(self, bot):
-        self.bot = bot
+        self.bot = bot        
         self.counter = 0
         self.msg_count = 0
         self.db_add.start()
         self.db_update.start()
-        self.Peaktime_RNG.start()
+        self.Peaktime_setter.start()
         self.Event_RFSH.start()
         self.amount_checker.start()
         self.booster_clear.start()
@@ -59,14 +59,14 @@ class currency(commands.Cog):
         # Timing Stuff
         # Default is 60 (turn time into minutes instead of seconds)
         self.peak_time = 60
-        self.peak_rnd = [1, 12]
+        self.peak_rnd = [5, 20]
 
         # memory usage, LRUs act as cache
         self.bal = LRU(30)
         self.msg_counts = LRU(5)
         self.dwn_streaks = LRU(15)
         self.up_streaks = LRU(15)
-        self.streaks_decay = 30
+        self.streaks_decay = 10
         self.peak = dict()
         self.roles = dict()
         role_ini(self)
@@ -135,9 +135,11 @@ class currency(commands.Cog):
     # handles message costs and payouts 
     @commands.Cog.listener("on_message")
     async def currency_manipulation(self, message):
-        try:
-            if not message.author.id == self.bot.user.id:  # EP CALC PER MESSAGE
-                #reveal_cache(self)
+        guild = self.bot.get_guild(int(self.roles['SERVERID'][0]))
+        bot_role = guild.get_role(726741576495398933) 
+        try:           
+            if not (bot_role in message.author.roles or message.channel.id == 726441555660898354):  # EP CALC PER MESSAGE
+                reveal_cache(self)
                 self.msg_count = self.msg_count+1
                 userid = str(message.author.id)
                 await fast_retrieve(self, userid)
@@ -177,24 +179,23 @@ class currency(commands.Cog):
         partner_role = guild.get_role(726501556324663437) #partner
 
         try:
-            if not owner_role in message.author.roles: #if user isn't owner
-                if not partner_role in message.author.roles and message.channel.id != 726441555660898354:
-                    # URL detection
-                    URL_REG = re.compile(r'https?://(?:www\.)?.+')
-                    if message.author.id != self.bot.user.id:
-                        if re.search( URL_REG , str(message.content)) != None:
-                            await message.delete()
-                            if message.channel.id != (944572217000341584): #if not terminal channel
-                                await link_punish(self , message)
+            if not owner_role in message.author.roles or not partner_role in message.author.roles and message.channel.id != 726441555660898354:
+                # URL detection
+                URL_REG = re.compile(r'https?://(?:www\.)?.+')
+                if message.author.id != self.bot.user.id:
+                    if re.search( URL_REG , str(message.content)) != None:
+                        await message.delete()
+                        if message.channel.id != (944572217000341584): #if not terminal channel
+                            await link_punish(self , message)
 
-                    # flood detection
-                    if message.author.id != self.bot.user.id:
-                        if len(message.content.split("\n")) >= self.flood_rate:
-                            user = guild.get_member(int(message.author.id))
-                            mute_role = guild.get_role(int(726446379823530015))
-                            await user.add_roles(mute_role)
-                            await message.delete()
-                            await filtered_msg_handling(self, "flooding", message.author.id)
+                # flood detection
+                if message.author.id != self.bot.user.id:
+                    if len(message.content.split("\n")) >= self.flood_rate:
+                        user = guild.get_member(int(message.author.id))
+                        mute_role = guild.get_role(int(726446379823530015))
+                        await user.add_roles(mute_role)
+                        await message.delete()
+                        await filtered_msg_handling(self, "flooding", message.author.id)
 
                 # spam detection
                 if message.author.id != self.bot.user.id:
@@ -204,6 +205,7 @@ class currency(commands.Cog):
                     except:
                         self.msg_counts[str(message.author.id)] = {}
                         self.msg_counts[str(message.author.id)]['rate'] = 0
+
         except AttributeError as exception:
             print(f'Filter Error: {exception}')
             pass
@@ -225,18 +227,14 @@ class currency(commands.Cog):
 
                 if user != self.bot.user.id:
                     if bot_role not in user.roles:
-                        for i in self.rolevals.keys():
-                            if i < 3:
-                                role = guild.get_role(self.rolevals[i])
-                                if role not in user.roles:
-                                    await user.add_roles(role)
-
-                            if rnd_val >= i:
-                                role = guild.get_role(self.rolevals[i])
+                        for key in self.rolevals.keys():
+                            if rnd_val >= key:
+                                role = guild.get_role(self.rolevals[key])
                                 await user.add_roles(role)
-                            if rnd_val < i:
-                                role = guild.get_role(self.rolevals[i])
+                            if rnd_val < key:
+                                role = guild.get_role(self.rolevals[key])
                                 await user.remove_roles(role)
+
         except AttributeError as exception:
             print(f'Typing Error: {exception}')
             pass
@@ -248,10 +246,15 @@ class currency(commands.Cog):
         #fetch_from_json(self, member.id)
         users = retrieve_cache(self)
         guild = self.bot.get_guild(int(self.roles['SERVERID'][0]))
-        role = guild.get_role(self.rolevals[1000])
-
-        #await create_user(users, member)
-        await member.add_roles(member, role)
+        ep_role = guild.get_role(self.rolevals[1000])
+        await member.add_roles(ep_role)
+        for key in self.rolevals.keys():
+            if key < 3:
+                default_role = guild.get_role(self.rolevals[key])
+                if default_role not in member.roles:
+                    await member.add_roles(default_role)
+            else:
+                break
 
     # (REACTION EVENTS) When the '❔' emote is reacted on a any cmd(cmds list) by a user,the user is explained the command by the bot in dms!(NOW USES A CUSTOM EMOTE)
     @commands.Cog.listener(name="on_reaction_add")
@@ -378,7 +381,7 @@ class currency(commands.Cog):
             except asyncpg.UniqueViolationError or asyncpg.PostgresSyntaxError:
                 pass
 
-    @tasks.loop(seconds=30)
+    @tasks.loop(seconds=15)
     async def db_update(self):
         '''If user in database, update their balance'''
         db = pgdb.retrieve_db()
@@ -414,8 +417,41 @@ class currency(commands.Cog):
             await asyncio.sleep(86400) #sleep for a day
 
 
+    @tasks.loop(seconds=1)
+    async def Peaktime_setter(self):
+        # Initiate: Peaktime state and Roles.json
+        guild = self.bot.get_guild(int(self.roles['SERVERID'][0]))
+        channel = guild.get_channel(int(self.roles['!channel_general'][0]))
+        role = guild.get_role(int(self.roles['PEAKTIME'][0]))
+        bot_user = guild.get_member(int(self.roles['BOT_USER_ID'][0]))
+        if self.Peakrun == False:
+
+            await bot_user.remove_roles(role)
+            try:
+                await self.embed_run.delete()
+                Peak_end_embed = await Peak_fnc(self, self.peak_duration, exit_embed='yes')
+                embed_end = await channel.send(embed=Peak_end_embed)
+                await embed_end.delete(delay=7)
+            except AttributeError as e:
+                print(e)
+
+            self.peak_cooldown = random.randint(3,15)
+            print('Next Peak In: ' + str(self.peak_cooldown) + " Minutes")
+            await asyncio.sleep(self.peak_cooldown*60)
+
+            self.Peakrun = True
+
+        else:
+            self.peak_duration = random.randint(self.peak_rnd[0], self.peak_rnd[1])
+            await bot_user.add_roles(role)
+            Peak_embed = await Peak_fnc(self, self.peak_duration)
+            self.embed_run = await channel.send(embed=Peak_embed)
+            await asyncio.sleep(self.peak_duration*60)
+
+            self.Peakrun = False
+
     # PEAKTIME RANDOMISER
-    @tasks.loop(seconds=60)
+    @tasks.loop(seconds=10)
     async def Peaktime_RNG(self):
         # Initiate: Peaktime state and Roles.json
         self.Peakrun = False
@@ -427,14 +463,13 @@ class currency(commands.Cog):
         # Cooldown time before next peaktime
         if int(self.peak['cooldown'][0]) == 0:
             self.peak['duration'][0] = 0
-            self.peak_cooldown = random.randint(1,30)  # randomise cooldown duration
-            tz_local = datetime.now().astimezone().tzinfo  # local timezone
-            #print('Next Peak In: ' + str(self.peak_cooldown) + " Minutes")
+            self.peak_cooldown = random.randint(1,3)  # randomise cooldown duration
+            print('Next Peak In: ' + str(self.peak_cooldown) + " Minutes")
             self.peak['cooldown'][0] = time.time(
             ) + self.peak_cooldown 
 
             self.peak_cooldown = datetime.fromtimestamp(
-                int(self.peak['cooldown'][0]), tz=None)
+                int(self.peak['cooldown'][0]))
 
         if self.peak['duration'][0] == 0:  # start peak
             if datetime.now() < self.peak_cooldown:
@@ -461,12 +496,14 @@ class currency(commands.Cog):
                 #print('peaktime sleep..(DURATION)')
                 pass
             else:
+                await bot_user.remove_roles(role)
                 self.peak['duration'][0] = 0
                 self.peak['cooldown'][0] = 0
                 # Sending embed for peaktime ended and removing the role off the bot
-                await self.embed_run.delete()
+                if self.Peakrun == True:
+                    await self.embed_run.delete()
+
                 Peak_end_embed = await Peak_fnc(self, self.peak_duration, exit_embed='yes')
-                await bot_user.remove_roles(role)
                 embed_end = await channel.send(embed=Peak_end_embed)
                 await embed_end.delete(delay=5)
 
@@ -528,17 +565,19 @@ class currency(commands.Cog):
                 users[str(userid )]['msg_decay'] = 'None'
                 await db_dump_decay(self,userid)
 
-    @ Peaktime_RNG.before_loop
+    @ Peaktime_setter.before_loop
     async def before_printer(self):
         print('waiting...')
         await self.bot.wait_until_ready()
-        if self.Peakrun == False:
-            guild = self.bot.get_guild(int(self.roles['SERVERID'][0]))
-            role = guild.get_role(int(self.roles['PEAKTIME'][0]))
-            bot_user = guild.get_member(int(self.roles['BOT_USER_ID'][0]))
-            await bot_user.remove_roles(role)
+        guild = self.bot.get_guild(int(self.roles['SERVERID'][0]))
+        role = guild.get_role(int(self.roles['PEAKTIME'][0]))
+        down_role = guild.get_role(947507959066402887)
+        bot_user = guild.get_member(int(self.roles['BOT_USER_ID'][0]))
+        await bot_user.remove_roles(role)
+        await bot_user.remove_roles(down_role)
+ 
 
-        print("Peaktime_RNG Running!")
+        print("Peaktime_setter Running!")
 
     @ db_update.before_loop
     async def before_printer(self):
@@ -574,6 +613,31 @@ class currency(commands.Cog):
 
     # OWNER COMMANDS: MODERATION___________________________________________________________________________
 
+    @commands.has_permissions(administrator=True)
+    @commands.command(name="shutdown",  aliases=['q', 'kill','stop', 'exit'], description="Turns the bot off")
+    async def poweroff(self, ctx):
+        guild = self.bot.get_guild(int(self.roles['SERVERID'][0]))
+        down_role = guild.get_role(947507959066402887) 
+        bot_user = guild.get_member(726487824639197184)
+        await ctx.send('```Shutting down..```', delete_after = 2)
+        await bot_user.add_roles(down_role)
+        #overwrite = discord.PermissionOverwrite(send_messages = False) 
+        #await guild.default_role.edit(Permissions=overwrite)
+        await asyncio.sleep(2)
+
+        await ctx.bot.close()
+
+    @commands.has_permissions(administrator=True)
+    @commands.command(name="turnon",  aliases=['on', 'run','start', 'open'], description="Turns the bot on")
+    async def poweron(self, ctx):
+        guild = self.bot.get_guild(int(self.roles['SERVERID'][0]))
+        down_role = guild.get_role(947507959066402887) 
+        bot_user = guild.get_member(726487824639197184)
+        await ctx.send('```Fake Power On For Debug Purposes..```', delete_after = 2)
+        #overwrite = discord.PermissionOverwrite(send_messages = False) 
+        #await guild.default_role.edit(Permissions=overwrite)
+        await bot_user.remove_roles(down_role)
+
     @ commands.command(name="PRINTROLES", aliases=['IDS'])
     @ commands.has_role('Owner')
     async def IDS(self, ctx):
@@ -607,32 +671,6 @@ class currency(commands.Cog):
         users[str(rcvid)]['amount'] = int(val)  
         print('cv | change successful')
 
-    @ commands.command(name="TESTEP", aliases=['testerep'])
-    @ commands.has_role('Owner')
-    async def EPCHECK(self, ctx):
-        sndid = ctx.author.id
-        users = retrieve_cache(self)
-        sndep = users[str(sndid)]['amount']
-        await ctx.send(sndep)
-
-    @ commands.command(name="ROLEUSER", aliases=['rolecheck'])
-    @ commands.has_role('Owner')
-    async def ROLETEST(self, ctx, *, roles):
-        print(roles)
-        sndid = ctx.author.id
-        print(sndid)
-
-    @ commands.command(name="ADDROLE", aliases=['radd'])
-    @ commands.has_role('Owner')
-    async def radd(self, ctx, rolename, roleid):
-        await assn_role(rolename, roleid)
-
-    @ commands.command(name="quit_bot", aliases=['q'])
-    @ commands.has_role(678547289824034846)
-    async def quit_bot(self, ctx):
-        print("Logging out..")
-        await self.bot.logout()
-
     @ commands.command(name="ADDUSER", aliases=['uadd'])
     @ commands.has_role(678547289824034846)
     async def Uadd(self, ctx, rcv: discord.Member):
@@ -643,7 +681,7 @@ class currency(commands.Cog):
     # bal command (user balance and proxity balances)
     @ commands.command(name='daily_balance', aliases=['d'])
     @ commands.cooldown(1, 86400, commands.BucketType.user)
-    @ commands.has_role('Owner')
+    @ commands.has_role(678547289824034846)
     async def daily_balance(self, ctx):
         users = retrieve_cache(self)
         rcvep = users[str(ctx.author.id)]['amount']
@@ -717,7 +755,7 @@ class currency(commands.Cog):
             ctx.message.send('```INSUFFICIENT FUNDS TO SUBMIT IMAGE```', delete_after=3)
 
     @ commands.command(name='post_image', aliases=['post','p'])
-    @ commands.cooldown(10, 10, commands.BucketType.guild)
+    @ commands.cooldown(4, 1, commands.BucketType.guild)
     async def post_img(self, ctx, *text_input):
         db = pgdb.retrieve_db()
         if text_input[0][:1] == '`' and text_input[0][-1] == '`':
@@ -743,9 +781,10 @@ class currency(commands.Cog):
         async def streaks_reactions(message, mult):
             await message.add_reaction(str(self.streak_emotes[mult]))
 
-        async def streak_sleep(self):
-            await asyncio.sleep(self.streaks_decay)
-            self.up_streaks[str(rcvid)]['Current Streak:'] = 0
+        async def streak_sleep():
+            if self.up_streaks[str(rcvid)]['Current Streak:'] < 3:
+                await asyncio.sleep(self.streaks_decay)
+                self.up_streaks[str(rcvid)]['Current Streak:'] = 0
 
         users = retrieve_cache(self)
         sndid = ctx.author.id
@@ -754,7 +793,7 @@ class currency(commands.Cog):
         role = guild.get_role(int(self.roles['Ban'][0]))
         user = guild.get_member(rcvid)
         message = ctx.message
-        mult = await add_dn_streaks(self, ctx.author.id, rcvid)
+        mult = await add_up_streaks(self, ctx.author.id, rcvid)
         if sndid != rcvid:
             sndep = users[str(sndid)]['amount']
             sndep = sndep-10
@@ -776,18 +815,18 @@ class currency(commands.Cog):
     @ commands.command(name="Downvote_cmd", aliases=['dn', 'downvote'])
     @ commands.cooldown(4, 1, commands.BucketType.guild)
     async def dn(self, ctx, rcv: discord.User):
+        print(self.dwn_streaks)
         await fast_retrieve(self, ctx.author.id)
         await fast_retrieve(self, rcv.id)
-        #fetch_from_json(self, ctx.author.id)
-        #fetch_from_json(self, rcv.id)
-        # add reaction based on streak value
 
+        # add reaction based on streak value
         async def streaks_reactions(message, mult):
             await message.add_reaction(str(self.streak_emotes[mult]))
 
-        async def streak_sleep(self):
-            await asyncio.sleep(self.streaks_decay)
-            self.dn_streaks[str(rcvid)]['Current Streak:'] = 0
+        async def streak_sleep():
+            if self.dwn_streaks[str(rcvid)]['Current Streak:'] < 3:
+                await asyncio.sleep(self.streaks_decay)
+                self.dwn_streaks[str(rcvid)]['Current Streak:'] = 0
 
         sndid = ctx.author.id
         rcvid = rcv.id
@@ -807,7 +846,7 @@ class currency(commands.Cog):
                     await streak_sleep(self)
                 else:
                     await ctx.send("```STREAK RESET: RECEIVER IS BROKE!```", delete_after=2)
-                    self.dn_streaks[str(rcvid)]['Current Streak:'] = 0
+                    self.dwn_streaks[str(rcvid)]['Current Streak:'] = 0
             else:
                 await ctx.send("```TRANSACTION FAILED: INSUFFICIENT FUNDS```", delete_after=2)
 
@@ -851,87 +890,39 @@ class currency(commands.Cog):
         else:
             await ctx.message.delete()
 
-    # del command (no name = del last 2 message)
+    # clear command
     @ commands.command(name="Delete_cmd", aliases=['del'])
-    @ commands.cooldown(2000, 5, commands.BucketType.guild)
-    async def clear(self, ctx, *, rcv: discord.Member = None):
+    @ commands.cooldown(20, 5, commands.BucketType.guild)
+    async def clear(self, ctx, rcv: discord.User):
+        trn_run = False
         await fast_retrieve(self, ctx.author.id)
         await fast_retrieve(self, rcv.id)
-        self.run = False
-        channel = ctx.channel
-        sndid = ctx.author.id
-
-        if rcv != None:
-            rcvid = rcv.id
-        else:
-            async for item in channel.history(limit=15, oldest_first=False):
-                if item.author != ctx.author:
-                    rcvN = item.author
-                    rcvid = rcvN.id
-                    break
+        rcvid = rcv.id
+        sndid = ctx.author.id 
+        channel = ctx.channel 
+        
         (sndep, newep, cost) = cost_calc(self, ctx, rcv, rcvid, sndid, 0.1)
         users = retrieve_cache(self)
+        if sndep > cost:
+            trn_embed, reactor, trn_run = await transaction_embed(self, ctx, rcv, int(self.roles['SERVERID'][0]), '𝘿𝙀𝙇 𝙏𝙍𝘼𝙉𝙎𝘼𝘾𝙏𝙄𝙊𝙉', ("Transaction: **__-" + str(cost) + "EP__**, Balance: **__" + str(newep) + "EP__**"))
 
-        if sndep >= cost:
-            trn_embed, reactor = await transaction_embed(self, ctx, rcv, int(self.roles['SERVERID'][0]), '𝘿𝙀𝙇 𝙏𝙍𝘼𝙉𝙎𝘼𝘾𝙏𝙄𝙊𝙉', ("Transaction: **__-" + str(cost) + "EP__**, Balance: **__" + str(newep) + "EP__**"))
-            await asyncio.sleep(5)
-            await trn_embed.delete()
+        if trn_run == True:
+                if sndep > cost:
+                    users[str(sndid)]['amount'] = newep
+                    async for message in channel.history(limit=100, oldest_first=False):
+                        if message.author.id == rcvid:
+                            await message.delete()
+                            break
+                else:
+                    await ctx.send('```TRANSACTION FAILED: INSUFFICIENT FUNDS```', delete_after=3)
         else:
             await ctx.send('```TRANSACTION FAILED: INSUFFICIENT FUNDS```', delete_after=3)
-
-        if self.run == True:
-            if rcv == None:
-                #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^RCV ISN'T GIVEN^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^#
-
-                ############################# USER CAN AFFORD THE TRANSACTION WITH REMAINING EP #############################
-                if sndep >= cost:
-                    users[str(sndid)]['amount'] = newep
-                    json_write(users)
-                    async for item in channel.history(limit=15, oldest_first=False):
-                        if item.author != ctx.author:  # MAKES SURE THE AUTHOR OBTAINED IS NOT THE COMMAND AUTHOR
-                            await item.delete()  # DELETES THE MESSAGE
-                            break
-                #___________________________________________________________________________________________________________#
-                ############################# USER CAN AFFORD THE TRANSACTION WITH NO REMAINING EP ##########################
-                elif sndep == cost:
-                    users[str(sndid)]['amount'] = 0
-                    json_write(users)
-                    async for item in channel.history(limit=15, oldest_first=False):
-                        if item.author != ctx.author:  # MAKES SURE THE AUTHOR OBTAINED IS NOT THE COMMAND AUTHOR
-                            await item.delete()  # DELETES THE MESSAGE
-                            break
-                    userid = sndid
-                    await role_add(self, int(self.roles['SERVERID'][0]), int(self.roles['Ban'][0]), userid, -1)
-                #___________________________________________________________________________________________________________#
-
-                #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^RCV IS GIVEN^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^#
-
-                ############################# USER CAN AFFORD THE TRANSACTION WITH REMAINING EP #############################
-            else:
-                if sndep >= cost:
-                    users[str(sndid)]['amount'] = newep
-                    json_write(users)
-                    async for item in channel.history(limit=200, oldest_first=False):
-                        if item.author == rcv:
-                            await item.delete()
-                            break
-
-                elif sndep == cost:
-                    users[str(sndid)]['amount'] = 0
-                    json_write(users)
-                    async for item in channel.history(limit=200, oldest_first=False):
-                        if item.author == rcv:
-                            await item.delete()
-                            break
-                    userid = sndid
-                    await role_add(self, int(self.roles['SERVERID'][0]), int(self.roles['Ban'][0]), userid, -1)
-        else:
             await ctx.message.delete()
 
-    # transfers,uses rates,delay in between the transfer of 15 mins
+    # transfers,uses rates,delay in between the transfer of 15 mins (currently disabled!)
     @ commands.command(name='Transfer_cmd', aliases=['t'])
     @ commands.cooldown(2000, 5, commands.BucketType.guild)
-    @ commands.has_role('Owner')
+    @ commands.has_role(678547289824034846)
     async def trns(self, ctx, val, rcv: discord.User):
         await fast_retrieve(self, ctx.author.id)
         await fast_retrieve(self, rcv.id)
@@ -1007,7 +998,6 @@ async def link_punish(self, message):
 
 # removes a role
 
-
 async def role_rmv(self, guildid, roleid, userid):
     guild = self.bot.get_guild(guildid)
     role = guild.get_role(roleid)
@@ -1016,7 +1006,6 @@ async def role_rmv(self, guildid, roleid, userid):
         await user.remove_roles(role)
 
 # adds a role,and delay(in seconds) defines how long until the role is removed,if delay is -1,the role is never removed
-
 
 async def role_add(self, guildid, roleid, userid, delay):
     guild = self.bot.get_guild(guildid)
@@ -1033,7 +1022,6 @@ async def role_add(self, guildid, roleid, userid, delay):
 
 # checks if users have a role,prioritises TRUE. seperate roleids with "#",takes a string
 
-
 async def role_check(self, userid, guildid, roleid):
     guild = self.bot.get_guild(guildid)
     member = guild.get_member(userid)
@@ -1049,7 +1037,6 @@ async def role_check(self, userid, guildid, roleid):
     return found
 
 # makes a booster that gives the role for 24 hours,at the given cost (test amount is 5 seconds for now)
-
 
 async def booster_create(self, ctx, cost, guildid, roleid, msg_payout, boostername):
     trn_run = False
@@ -1077,7 +1064,6 @@ async def booster_create(self, ctx, cost, guildid, roleid, msg_payout, boosterna
         await ctx.message.delete()
 
 # Embed functions
-
 
 async def create_atlb_embed(self, db_bals):
     msg_string = f'{chr(173)}'
@@ -1124,7 +1110,6 @@ async def create_wlb_embed(self, db_bals):
     print('another test 7')
     return lb_embed
 
-
 async def Peak_fnc(self, peak_duration, exit_embed=None):
     Peak_embed = discord.Embed(title="𝙋𝙀𝘼𝙆𝙏𝙄𝙈𝙀 𝘼𝘾𝙏𝙄𝙑𝘼𝙏𝙀𝘿",
                                description="Sending Messages Rewards EP⠀", colour=discord.Colour.green())
@@ -1140,7 +1125,6 @@ async def Peak_fnc(self, peak_duration, exit_embed=None):
         return Peak_embed
     else:
         return Peak_end_embed
-
 
 async def transaction_embed(self, ctx, rcv, guildid, title, costmsg):
     Warn_embed = discord.Embed(
@@ -1171,8 +1155,8 @@ async def transaction_embed(self, ctx, rcv, guildid, title, costmsg):
         print(str(e))
     else:
         trn_run = True
-    return trn_embed, reactor, trn_run
 
+    return trn_embed, reactor, trn_run
 
 # yes I know proxy doesn't mean proximity but shh
 async def Bal_fnc(self, ctx, ctx_bal, proxy_bal_1=None, proxy_bal_1_user=None, proxy_bal_2=None, proxy_bal_2_user=None):
@@ -1205,7 +1189,6 @@ async def Bal_fnc(self, ctx, ctx_bal, proxy_bal_1=None, proxy_bal_1_user=None, p
         msg = await ctx.send(embed=Bal_2_proxy)
         await msg.delete(delay=15)
 
-
 async def already_booster(self, ctx):
     boost_deny_embed = discord.Embed(
         title="𝙏𝙍𝘼𝙉𝙎𝘼𝘾𝙏𝙄𝙊𝙉 𝘿𝙀𝙉𝙄𝙀𝘿", description="**__You Cannot Buy A Booster__**", colour=discord.Colour.dark_red())
@@ -1217,7 +1200,6 @@ async def already_booster(self, ctx):
 
 # reaction functions
 
-
 async def reactionassign(self, ctx, msg):
     async def addreactionss(message):
         await message.add_reaction('✔')
@@ -1228,7 +1210,6 @@ async def reactionassign(self, ctx, msg):
     await addreactionss(trn_embed)
 
 # calculates the cost of each command,modify cost_mul to change the cost!
-
 
 def cost_calc(self, ctx, rcv, rcvid, sndid, cost_mul):
     users = retrieve_cache(self)
@@ -1246,7 +1227,6 @@ def cost_calc(self, ctx, rcv, rcvid, sndid, cost_mul):
 
 # calculates the cost of each transfer,modify cost_mul to change the cost!
 
-
 def transfer_calc(self, ctx, val, rcv, cost_mul):
     sndid = ctx.author.id
     rcvid = rcv.id
@@ -1258,43 +1238,6 @@ def transfer_calc(self, ctx, val, rcv, cost_mul):
     Nrcvep = int(rcvep)+int(val)
     return (sndid, rcvid, newep, Nrcvep, rcvep)
 
-# json read and write functions
-
-
-def json_read():
-    with open(cogs_data+"users.json", 'r') as f:
-        users = json.load(f)
-    return users
-
-
-def json_write(users):
-    with open(cogs_data+"users.json", 'w') as f:
-        json.dump(users, f)
-
-
-def rjson_read():
-    with open(cogs_data+'roles.json', 'r') as f:
-        roles = json.load(f)
-    return roles
-
-
-# If no users.json exists, make one
-if path.exists(cogs_data+"users.json") == False:
-    with open(cogs_data+'users.json', 'w') as userjson:
-        json.dump({
-        }, userjson)
-    print("[INFO] users.json generated!")
-else:
-    pass
-
-# If no roles.json exists, make one
-if path.exists(cogs_data+"roles.json") == False:
-    with open(cogs_data+'roles.json', 'w') as rolejson:
-        json.dump({
-        }, rolejson)
-    print("[INFO] roles.json generated!")
-else:
-    pass
 
 # Add a user to the streaks dictionary, user is removed after self.streak_decay seconds
 

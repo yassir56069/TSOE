@@ -28,7 +28,7 @@ initial_extensions = ['cogs.events',
                       'cogs.commands',
                        'cogs.currency',
                        'cogs.chat_filter'
-                       ]
+                       ]    
 
 
 #Setup
