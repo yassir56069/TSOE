@@ -1,5 +1,4 @@
 import os, discord, random, asyncio, json, time, platform
-from turtle import down
 from os import path
 from discord.ext import commands, tasks
 from discord.ext.commands import cooldown
