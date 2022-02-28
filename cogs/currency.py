@@ -413,7 +413,7 @@ class currency(commands.Cog):
             db_bals = await db.fetch('SELECT userid , balance FROM users')
             for userid, balance in dict(db_bals).items():
                 await db.execute(f'UPDATE users SET weekly_bal = {balance} WHERE userid = {userid}    ')
-            await asyncio.sleep(86400) #sleep for a day
+            await asyncio.sleep(86400)
 
 
     @tasks.loop(seconds=1)
@@ -696,7 +696,7 @@ class currency(commands.Cog):
 
     # bal command (user balance and proxity balances)
     @ commands.command(name='Balance_cmd', aliases=['bal'])
-    @ commands.cooldown(10, 60, commands.BucketType.user)
+    @ commands.cooldown(10, 60, commands.BucketType.guild)
     async def balance(self, ctx):
         await fast_retrieve(self, ctx.author.id)
         #fetch_from_json(self, ctx.author.id)
@@ -736,11 +736,15 @@ class currency(commands.Cog):
         self.whitelist = self.bot.get_channel(int(944571917598343248))
         await fast_retrieve(self, ctx.author.id)
         users = retrieve_cache(self)
-        if users[str(ctx.author.id)]['amount'] > self.image_cost:
-            users[str(ctx.author.id)]['amount'] = users[str(ctx.author.id)]['amount'] - self.image_cost
-            run = True
+        if len(name) < 51:
+            if users[str(ctx.author.id)]['amount'] > self.image_cost:
+                users[str(ctx.author.id)]['amount'] = users[str(ctx.author.id)]['amount'] - self.image_cost
+                run = True
+            else:
+                run = False
         else:
             run = False
+            await ctx.send('```NAME GIVEN IS TOO LONG! PLEASE USE LESS THAN 50 CHARACTERS..```')
 
         img_flag =  await db_addimg(ctx, link, name)    
         if run == True:
@@ -857,7 +861,7 @@ class currency(commands.Cog):
 
     # null command (muting for 10 mins)
     @ commands.command(name="Muting_cmd", aliases=['null'])
-    @ commands.cooldown(1, 10, commands.BucketType.user)
+    @ commands.cooldown(1, 20, commands.BucketType.user)
     async def nl(self, ctx, rcv: discord.User):
         await fast_retrieve(self, ctx.author.id)
         await fast_retrieve(self, rcv.id)
@@ -890,7 +894,7 @@ class currency(commands.Cog):
 
     # clear command
     @ commands.command(name="Delete_cmd", aliases=['del'])
-    @ commands.cooldown(20, 5, commands.BucketType.guild)
+    @ commands.cooldown(1, 10, commands.BucketType.user)
     async def clear(self, ctx, rcv: discord.User):
         trn_run = False
         await fast_retrieve(self, ctx.author.id)
