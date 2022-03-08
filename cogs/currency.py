@@ -63,10 +63,10 @@ class currency(commands.Cog):
 
         # memory usage, LRUs act as cache
         self.bal = LRU(30)
-        self.msg_counts = LRU(5)
+        self.msg_counts = LRU(10)
         self.dwn_streaks = LRU(15)
         self.up_streaks = LRU(15)
-        self.streaks_decay = 10
+        self.streaks_decay = 5
         self.peak = dict()
         self.roles = dict()
         role_ini(self)
@@ -168,46 +168,39 @@ class currency(commands.Cog):
 
         except AttributeError as exception:
             print(f'Message Error: {exception}')
-            pass
 
     # handles all chat filtering and moderation
     @commands.Cog.listener("on_message")
     async def chat_filter(self, message):
+        user = message.author
         guild = self.bot.get_guild(int(self.roles['SERVERID'][0]))
-        owner_role = guild.get_role(678547289824034846) #owner
-        partner_role = guild.get_role(726501556324663437) #partner
-
+        owner_role = guild.get_role(678547289824034846) 
+        partner_role = guild.get_role(726501556324663437) 
+        bot_role = guild.get_role(726741576495398933) 
         try:
-            if not ( (owner_role in message.author.roles) or (partner_role in message.author.roles and message.channel.id == 726441555660898354) ) :
+            if not ((partner_role in user.roles) or (bot_role in user.roles)) :
                 # URL detection
                 URL_REG = re.compile(r'https?://(?:www\.)?.+')
-                if message.author.id != self.bot.user.id:
-                    if re.search( URL_REG , str(message.content)) != None:
-                        await message.delete()
-                        if message.channel.id != (944572217000341584): #if not terminal channel
-                            await link_punish(self , message)
+                if re.search( URL_REG , str(message.content)) != None:
+                    await message.delete()
+                    if message.channel.id != (944572217000341584): #if not terminal channel
+                        await link_punish(self , message)
 
                 # flood detection
-                if message.author.id != self.bot.user.id:
-                    if len(message.content.split("\n")) >= self.flood_rate:
-                        user = guild.get_member(int(message.author.id))
-                        mute_role = guild.get_role(int(726446379823530015))
-                        await user.add_roles(mute_role)
-                        await message.delete()
-                        await filtered_msg_handling(self, "flooding", message.author.id)
+                if len(message.content.split("\n")) >= self.flood_rate:
+                    await message.delete()
+                    await filtered_msg_handling(self, "flooding", message.author.id)
 
                 # spam detection
-                if message.author.id != self.bot.user.id:
-                    try:
-                        self.msg_counts[str(message.author.id)]['rate'] = self.msg_counts[str(
-                            message.author.id)]['rate']+1
-                    except:
-                        self.msg_counts[str(message.author.id)] = {}
-                        self.msg_counts[str(message.author.id)]['rate'] = 0
+                try:
+                    self.msg_counts[str(message.author.id)]['rate'] = self.msg_counts[str(
+                        message.author.id)]['rate']+1
+                except:
+                    self.msg_counts[str(message.author.id)] = {}
+                    self.msg_counts[str(message.author.id)]['rate'] = 0
 
         except AttributeError as exception:
             print(f'Filter Error: {exception}')
-            pass
 
     @commands.Cog.listener()
     @commands.cooldown(2, 3, BucketType.guild)
@@ -348,7 +341,6 @@ class currency(commands.Cog):
                                     FETCH FIRST 10 ROWS ONLY;
                                     ''')
         lb_embed = await create_wlb_embed(self, db_bals)
-        print('another test 2')
         await ctx.send(embed=lb_embed)
 
     @ commands.cooldown(1, 30, commands.BucketType.guild)
@@ -431,8 +423,8 @@ class currency(commands.Cog):
                 Peak_end_embed = await Peak_fnc(self, self.peak_duration, exit_embed='yes')
                 embed_end = await channel.send(embed=Peak_end_embed)
                 await embed_end.delete(delay=7)
-            except AttributeError as e:
-                print(e)
+            except AttributeError:
+                pass
 
             self.peak_cooldown = random.randint(3,15)
             print('Next Peak In: ' + str(self.peak_cooldown) + " Minutes")
@@ -449,62 +441,6 @@ class currency(commands.Cog):
 
             self.Peakrun = False
 
-    # PEAKTIME RANDOMISER
-    @tasks.loop(seconds=10)
-    async def Peaktime_RNG(self):
-        # Initiate: Peaktime state and Roles.json
-        self.Peakrun = False
-        guild = self.bot.get_guild(int(self.roles['SERVERID'][0]))
-        channel = guild.get_channel(int(self.roles['!channel_general'][0]))
-        role = guild.get_role(int(self.roles['PEAKTIME'][0]))
-        bot_user = guild.get_member(int(self.roles['BOT_USER_ID'][0]))
-
-        # Cooldown time before next peaktime
-        if int(self.peak['cooldown'][0]) == 0:
-            self.peak['duration'][0] = 0
-            self.peak_cooldown = random.randint(1,3)  # randomise cooldown duration
-            print('Next Peak In: ' + str(self.peak_cooldown) + " Minutes")
-            self.peak['cooldown'][0] = time.time(
-            ) + self.peak_cooldown 
-
-            self.peak_cooldown = datetime.fromtimestamp(
-                int(self.peak['cooldown'][0]))
-
-        if self.peak['duration'][0] == 0:  # start peak
-            if datetime.now() < self.peak_cooldown:
-                # sleep until peaktime
-                #print('peaktime sleep..')
-                pass
-            else:
-                # Peaktime run
-                self.peak_duration = random.randint(
-                    self.peak_rnd[0], self.peak_rnd[1])
-                self.peak['duration'][0] = time.time(
-                ) + self.peak_duration * self.peak_time
-                self.Peakrun = True
-                await bot_user.add_roles(role)
-                Peak_embed = await Peak_fnc(self, self.peak_duration)
-                self.embed_run = await channel.send(embed=Peak_embed)
-
-                # sleep until peaktime ends
-                self.peak_duration = datetime.fromtimestamp(
-                    int(self.peak['duration'][0]))
-
-        if self.peak['duration'][0] != 0:  # end peak
-            if datetime.now() < self.peak_duration:
-                #print('peaktime sleep..(DURATION)')
-                pass
-            else:
-                await bot_user.remove_roles(role)
-                self.peak['duration'][0] = 0
-                self.peak['cooldown'][0] = 0
-                # Sending embed for peaktime ended and removing the role off the bot
-                if self.Peakrun == True:
-                    await self.embed_run.delete()
-
-                Peak_end_embed = await Peak_fnc(self, self.peak_duration, exit_embed='yes')
-                embed_end = await channel.send(embed=Peak_end_embed)
-                await embed_end.delete(delay=5)
 
     @ tasks.loop(seconds=2)
     async def Event_RFSH(self):
@@ -515,16 +451,13 @@ class currency(commands.Cog):
         self.msg_count = 0
 
     # mute trigger (individual msg_count)
-    @ tasks.loop(seconds=2)
+    @ tasks.loop(seconds=3)
     async def mute_trigger(self):
         for users in self.msg_counts.keys():
-            if self.msg_counts[str(users)]['rate'] >= 4:
-                self.msg_counts[str(users)]['rate'] = 0
-                guild = self.bot.get_guild(int(self.roles['SERVERID'][0]))
-                user = guild.get_member(int(users))
-                role = guild.get_role(int(726446379823530015))
-                await user.add_roles(role)
+            if self.msg_counts[str(users)]['rate'] >= 5:
                 await filtered_msg_handling(self, "spamming", users)
+                self.msg_counts[str(users)]['rate'] = 0
+
             self.msg_counts[str(users)]['rate'] = 0
 
     # updating boosters
@@ -784,8 +717,8 @@ class currency(commands.Cog):
         async def streaks_reactions(message, mult):
             await message.add_reaction(str(self.streak_emotes[mult]))
 
-        async def streak_sleep():
-            if self.up_streaks[str(rcvid)]['Current Streak:'] < 3:
+        async def streak_sleep(self):
+            if self.up_streaks[str(rcvid)]['Current Streak:'] > 0:
                 await asyncio.sleep(self.streaks_decay)
                 self.up_streaks[str(rcvid)]['Current Streak:'] = 0
 
@@ -825,8 +758,8 @@ class currency(commands.Cog):
         async def streaks_reactions(message, mult):
             await message.add_reaction(str(self.streak_emotes[mult]))
 
-        async def streak_sleep():
-            if self.dwn_streaks[str(rcvid)]['Current Streak:'] < 3:
+        async def streak_sleep(self):
+            if self.up_streaks[str(rcvid)]['Current Streak:'] > 0:
                 await asyncio.sleep(self.streaks_decay)
                 self.dwn_streaks[str(rcvid)]['Current Streak:'] = 0
 
@@ -957,46 +890,42 @@ async def filtered_msg_handling(self, reason, msg_author):
     user = guild.get_member(int(msg_author))
     role = guild.get_role(int(726446379823530015))
     users = retrieve_cache(self)
-
-    #print("ADDED ROLE")
+    duration = 30
 
     user_bal = users[str(msg_author)]['amount']
     cost = round(self.filter_tax*user_bal, 2)
     user_bal = user_bal-cost
     users[str(msg_author)]['amount'] = user_bal
-    duration = 30
+    
 
-    #print("CALCULATIONS DONE, ABOUT TO SEND EMBED")
     warn_msg = await self.text_chnl.send(f'``` {user} has been charged {cost} EP and muted for {reason}: {duration} seconds.```')
 
     await asyncio.sleep(duration)  # MUTE DURATION
 
-    warn_done = True
     await user.remove_roles(role)
     await warn_msg.delete()
-    return warn_done
 
 async def link_punish(self, message):
     guild = self.bot.get_guild(int(self.roles['SERVERID'][0]))
     user = guild.get_member(int(message.author.id))
-    role = guild.get_role(int(726446379823530015))
+    mute_role = guild.get_role(726446379823530015)
+    duration = 60
 
-    await user.add_roles(role)                  
+    await user.add_roles(mute_role)                  
+    #balance deduction
     users = retrieve_cache(self)
     user_bal = users[str(message.author.id)]['amount']
     cost = round((self.filter_tax*user_bal)*2, 2)
     user_bal = user_bal-cost
     users[str(message.author.id)]['amount'] = user_bal
-    duration = 60
+
     warn = (f"```Links not allowed in this channel: {user} has been charged {cost} EP and muted for {duration} seconds.```")
     warn_msg = await message.channel.send(warn)
 
     await asyncio.sleep(duration)  # MUTE DURATION
 
-    warn_done = True
-    await user.remove_roles(role)
+    await user.remove_roles(mute_role)
     await warn_msg.delete()
-    return warn_done
 
 # removes a role
 
@@ -1078,6 +1007,8 @@ async def create_atlb_embed(self, db_bals):
     for userid, balance in dict(db_bals).items():
         ind = {k: i for i, k in enumerate(dict(db_bals).keys())}
         user = guild.get_member(userid)
+
+    
         try:
             msg_string = msg_string + (f'`{int(ind[userid]) + 1}▐ `{user.mention}`- 𝕭𝔞𝔩𝔞𝔫𝔠𝔢: {balance}`\n')
         except:
@@ -1090,26 +1021,24 @@ async def create_atlb_embed(self, db_bals):
 async def create_wlb_embed(self, db_bals):
     msg_string = f'{chr(173)}'
     guild = self.bot.get_guild(int(self.roles['SERVERID'][0]))
-    print('another test 3')
     lb_embed = discord.Embed(title="𝖂𝔢𝔢𝔨𝔩𝔶 𝕷𝔢𝔞𝔡𝔢𝔯𝔟𝔬𝔞𝔯𝔡",
                              description="*The Ten Highest Earners This Week*", colour=discord.Colour.gold())
     lb_embed.set_footer(text='𝕿𝔥𝔢 𝕾𝔞𝔫𝔱𝔲𝔞𝔯𝔶 𝕺𝔣 𝕰𝔱𝔢𝔯𝔫𝔞𝔩𝔰',
                         icon_url='https://i.imgur.com/3zNEuX4.png')
 
-    print('another test 4')
     for userid, balance in dict(db_bals).items():
         ind = {k: i for i, k in enumerate(dict(db_bals).keys())}
         user = guild.get_member(userid)
+        if balance > 0:
+            balance = str(f'+{balance}')
         try:
             msg_string = msg_string + (f'`{int(ind[userid]) + 1}▐ `{user.mention}`- 𝕭𝔞𝔩𝔞𝔫𝔠𝔢: {balance}`\n')
         except:
             msg_string = msg_string + (f'`{int(ind[userid]) + 1}▐ {userid}- 𝕭𝔞𝔩𝔞𝔫𝔠𝔢: {balance}`\n')
 
         msg_string = msg_string + '\n'
-        print('another test 5')
-    print('another test 6')
+
     lb_embed.add_field(name=chr(173), value=msg_string)
-    print('another test 7')
     return lb_embed
 
 async def Peak_fnc(self, peak_duration, exit_embed=None):

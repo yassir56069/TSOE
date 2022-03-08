@@ -93,6 +93,64 @@ async def clear2(self, ctx, *, rcv: discord.Member = None):
     else:
         await ctx.message.delete()
 
+    # PEAKTIME RANDOMISER
+    @tasks.loop(seconds=10)
+    async def Peaktime_RNG(self):
+        # Initiate: Peaktime state and Roles.json
+        self.Peakrun = False
+        guild = self.bot.get_guild(int(self.roles['SERVERID'][0]))
+        channel = guild.get_channel(int(self.roles['!channel_general'][0]))
+        role = guild.get_role(int(self.roles['PEAKTIME'][0]))
+        bot_user = guild.get_member(int(self.roles['BOT_USER_ID'][0]))
+
+        # Cooldown time before next peaktime
+        if int(self.peak['cooldown'][0]) == 0:
+            self.peak['duration'][0] = 0
+            self.peak_cooldown = random.randint(1,3)  # randomise cooldown duration
+            print('Next Peak In: ' + str(self.peak_cooldown) + " Minutes")
+            self.peak['cooldown'][0] = time.time(
+            ) + self.peak_cooldown 
+
+            self.peak_cooldown = datetime.fromtimestamp(
+                int(self.peak['cooldown'][0]))
+
+        if self.peak['duration'][0] == 0:  # start peak
+            if datetime.now() < self.peak_cooldown:
+                # sleep until peaktime
+                #print('peaktime sleep..')
+                pass
+            else:
+                # Peaktime run
+                self.peak_duration = random.randint(
+                    self.peak_rnd[0], self.peak_rnd[1])
+                self.peak['duration'][0] = time.time(
+                ) + self.peak_duration * self.peak_time
+                self.Peakrun = True
+                await bot_user.add_roles(role)
+                Peak_embed = await Peak_fnc(self, self.peak_duration)
+                self.embed_run = await channel.send(embed=Peak_embed)
+
+                # sleep until peaktime ends
+                self.peak_duration = datetime.fromtimestamp(
+                    int(self.peak['duration'][0]))
+
+        if self.peak['duration'][0] != 0:  # end peak
+            if datetime.now() < self.peak_duration:
+                #print('peaktime sleep..(DURATION)')
+                pass
+            else:
+                await bot_user.remove_roles(role)
+                self.peak['duration'][0] = 0
+                self.peak['cooldown'][0] = 0
+                # Sending embed for peaktime ended and removing the role off the bot
+                if self.Peakrun == True:
+                    await self.embed_run.delete()
+
+                Peak_end_embed = await Peak_fnc(self, self.peak_duration, exit_embed='yes')
+                embed_end = await channel.send(embed=Peak_end_embed)
+                await embed_end.delete(delay=5)
+
+
 # json read and write functions
 
 
