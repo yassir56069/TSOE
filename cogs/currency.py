@@ -888,8 +888,9 @@ class currency(commands.Cog):
 async def filtered_msg_handling(self, reason, msg_author):
     guild = self.bot.get_guild(int(self.roles['SERVERID'][0]))
     user = guild.get_member(int(msg_author))
-    role = guild.get_role(int(726446379823530015))
+    mute_role = guild.get_role(int(726446379823530015))
     users = retrieve_cache(self)
+    await user.add_roles(mute_role)
     duration = 30
 
     user_bal = users[str(msg_author)]['amount']
@@ -902,7 +903,7 @@ async def filtered_msg_handling(self, reason, msg_author):
 
     await asyncio.sleep(duration)  # MUTE DURATION
 
-    await user.remove_roles(role)
+    await user.remove_roles(mute_role)
     await warn_msg.delete()
 
 async def link_punish(self, message):
