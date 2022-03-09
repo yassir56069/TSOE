@@ -48,7 +48,7 @@ class events(commands.Cog):
             await cooldwn.delete(delay=2)
 
         if isinstance(error,commands.UserNotFound):
-            pass
+            print('something went wrong')
 
        # elif isinstance(error, commands.CheckFailure):
         #    ...

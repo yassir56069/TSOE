@@ -707,7 +707,7 @@ class currency(commands.Cog):
     # up command (upvotes)
     @ commands.command(name="Upvote_cmd", aliases=['up', 'upvote'])
     @ commands.cooldown(4, 1, commands.BucketType.guild)
-    async def up(self, ctx, rcv: discord.User):
+    async def up(self, ctx, rcv: discord.Member):
         await fast_retrieve(self, ctx.author.id)
         await fast_retrieve(self, rcv.id)
         #fetch_from_json(self, ctx.author.id)
@@ -750,7 +750,7 @@ class currency(commands.Cog):
     # dn command (downvotes)
     @ commands.command(name="Downvote_cmd", aliases=['dn', 'downvote'])
     @ commands.cooldown(4, 1, commands.BucketType.guild)
-    async def dn(self, ctx, rcv: discord.User):
+    async def dn(self, ctx, rcv: discord.Member):
         await fast_retrieve(self, ctx.author.id)
         await fast_retrieve(self, rcv.id)
 
@@ -794,15 +794,15 @@ class currency(commands.Cog):
 
     # null command (muting for 10 mins)
     @ commands.command(name="Muting_cmd", aliases=['null'])
-    @ commands.cooldown(1, 20, commands.BucketType.user)
-    async def nl(self, ctx, rcv: discord.User):
+    @ commands.cooldown(1, 10, commands.BucketType.user)
+    async def nl(self, ctx, rcv: discord.Member):
         await fast_retrieve(self, ctx.author.id)
         await fast_retrieve(self, rcv.id)
+        users = retrieve_cache(self)
         trn_run = False
         sndid = ctx.author.id
         rcvid = rcv.id
         (sndep, newep, cost) = cost_calc(self, ctx, rcv, rcvid, sndid, 0.5)
-        users = retrieve_cache(self)
         guild = self.bot.get_guild(int(self.roles['SERVERID'][0]))
 
         user = guild.get_member(rcvid)
@@ -813,22 +813,29 @@ class currency(commands.Cog):
                 await ctx.send('```CANNOT MUTE USER: ALREADY MUTED```', delete_after=5)
             else:
                 trn_embed, reactor, trn_run = await transaction_embed(self, ctx, rcv, int(self.roles['SERVERID'][0]), '𝙉𝙐𝙇𝙇 𝙏𝙍𝘼𝙉𝙎𝘼𝘾𝙏𝙄𝙊𝙉', ("Transaction: **__-" + str(cost) + "EP__**, Balance: **__" + str(newep) + "EP__**"))
+                print(trn_run)
         else:
             await ctx.send('```TRANSACTION FAILED: INSUFFICIENT FUNDS```', delete_after=1)
 
         if trn_run == True:
-            if sndep > cost:
-                users[str(sndid)]['amount'] = newep
-                # RECEIVER REPLICATIONS
-                userid = rcvid
-                await role_add(self, int(self.roles['SERVERID'][0]), int(self.roles['Muted'][0]), userid, 300)
+            print(sndep)
+            users[str(sndid)]['amount'] = newep
+            print('test')
+            # RECEIVER REPLICATIONS
+            await rcv.add_roles(Mute)
+            print('add')
+            await asyncio.sleep(300)
+            await rcv.remove_roles(Mute)
+            print('remove')
+            #userid = rcvid
+            #await role_add(self, int(self.roles['SERVERID'][0]), int(self.roles['Muted'][0]), userid, 300)
         else:
             await ctx.message.delete()
 
     # clear command
     @ commands.command(name="Delete_cmd", aliases=['del'])
     @ commands.cooldown(1, 10, commands.BucketType.user)
-    async def clear(self, ctx, rcv: discord.User):
+    async def clear(self, ctx, rcv: discord.Member):
         trn_run = False
         await fast_retrieve(self, ctx.author.id)
         await fast_retrieve(self, rcv.id)
