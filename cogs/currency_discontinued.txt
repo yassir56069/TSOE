@@ -188,3 +188,26 @@ if path.exists(cogs_data+"roles.json") == False:
     print("[INFO] roles.json generated!")
 else:
     pass
+
+
+
+
+
+    # URL detection
+if re.search( self.URL_REG  , str(message.content)) != None:
+    await message.delete()
+    if message.channel.id != (944572217000341584): #if not terminal channel
+        await link_punish(self , message)
+
+# flood detection
+if len(message.content.split("\n")) >= self.flood_rate:
+    await message.delete()
+    await filtered_msg_handling(self, "flooding", message.author.id)
+
+# spam detection
+try:
+    self.msg_counts[(message.author.id)]['rate'] = self.msg_counts[str(
+        message.author.id)]['rate']+1
+except:
+    self.msg_counts[(message.author.id)] = {}
+    self.msg_counts[(message.author.id)]['rate'] = 0

@@ -108,6 +108,7 @@ class currency(commands.Cog):
         self.image_cost = 1000
 
         # chat content filter
+        self.URL_REG = re.compile(r'https?://(?:www\.)?.+')
         self.flood_rate = 5
         self.filter_tax = 0.05
         self.filter_warn_delay = 3
@@ -172,16 +173,13 @@ class currency(commands.Cog):
     # handles all chat filtering and moderation
     @commands.Cog.listener("on_message")
     async def chat_filter(self, message):
-        user = message.author
         guild = self.bot.get_guild(int(self.roles['SERVERID'][0]))
-        owner_role = guild.get_role(678547289824034846) 
-        partner_role = guild.get_role(726501556324663437) 
-        bot_role = guild.get_role(726741576495398933) 
+        partner_role_id = 726501556324663437 
+        bot_role_id = 726741576495398933 
         try:
-            if not ((partner_role in user.roles) or (bot_role in user.roles)) :
-                # URL detection
-                URL_REG = re.compile(r'https?://(?:www\.)?.+')
-                if re.search( URL_REG , str(message.content)) != None:
+            if not ((partner_role_id in [roles.id for roles in message.author.roles]) or (bot_role_id in [roles.id for roles in message.author.roles])):
+                    # URL detection
+                if re.search( self.URL_REG  , str(message.content)) != None:
                     await message.delete()
                     if message.channel.id != (944572217000341584): #if not terminal channel
                         await link_punish(self , message)
@@ -193,17 +191,18 @@ class currency(commands.Cog):
 
                 # spam detection
                 try:
-                    self.msg_counts[str(message.author.id)]['rate'] = self.msg_counts[str(
+                    self.msg_counts[(message.author.id)]['rate'] = self.msg_counts[str(
                         message.author.id)]['rate']+1
                 except:
-                    self.msg_counts[str(message.author.id)] = {}
-                    self.msg_counts[str(message.author.id)]['rate'] = 0
+                    self.msg_counts[(message.author.id)] = {}
+                    self.msg_counts[(message.author.id)]['rate'] = 0
 
         except AttributeError as exception:
             print(f'Filter Error: {exception}')
 
+
     @commands.Cog.listener()
-    @commands.cooldown(2, 3, BucketType.guild)
+    @commands.cooldown(5, 3, BucketType.guild)
     async def on_typing(self, channel, user, when):
         guild = self.bot.get_guild(int(678151676862922792))
         userid = str(user.id)
@@ -343,7 +342,7 @@ class currency(commands.Cog):
         lb_embed = await create_wlb_embed(self, db_bals)
         await ctx.send(embed=lb_embed)
 
-    @ commands.cooldown(1, 30, commands.BucketType.guild)
+    @ commands.cooldown(1, 10, commands.BucketType.guild)
     @commands.command(name="whitelist", aliases=['wlist'])
     async def display_whitelist(self, ctx):
         msg_string = (f"```ACCEPTED IMAGE LINKS: ```")
@@ -454,11 +453,11 @@ class currency(commands.Cog):
     @ tasks.loop(seconds=3)
     async def mute_trigger(self):
         for users in self.msg_counts.keys():
-            if self.msg_counts[str(users)]['rate'] >= 5:
+            if self.msg_counts[users]['rate'] >= 5:
                 await filtered_msg_handling(self, "spamming", users)
-                self.msg_counts[str(users)]['rate'] = 0
+                self.msg_counts[users]['rate'] = 0
 
-            self.msg_counts[str(users)]['rate'] = 0
+            self.msg_counts[users]['rate'] = 0
 
     # updating boosters
     @ tasks.loop(seconds=5)
